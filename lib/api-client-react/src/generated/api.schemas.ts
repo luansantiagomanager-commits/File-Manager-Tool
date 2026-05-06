@@ -8,3 +8,52 @@
 export interface HealthStatus {
   status: string;
 }
+
+export type Perfil = (typeof Perfil)[keyof typeof Perfil];
+
+export const Perfil = {
+  ADMIN: "ADMIN",
+  GERENTE: "GERENTE",
+  COLABORADOR: "COLABORADOR",
+} as const;
+
+export interface Usuario {
+  id: number;
+  nome: string;
+  cpf: string;
+  email: string;
+  cargo: string;
+  login: string;
+  perfil: Perfil;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateUsuarioBody {
+  nome: string;
+  cpf: string;
+  email: string;
+  cargo: string;
+  login: string;
+  senha: string;
+  perfil: Perfil;
+}
+
+export interface UpdateUsuarioBody {
+  nome?: string;
+  cpf?: string;
+  email?: string;
+  cargo?: string;
+  login?: string;
+  senha?: string;
+  perfil?: Perfil;
+}
+
+export interface PerfilStat {
+  perfil: Perfil;
+  count: number;
+}
+
+export interface ErrorResponse {
+  error: string;
+}

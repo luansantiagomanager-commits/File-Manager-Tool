@@ -5,18 +5,28 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  CreateUsuarioBody,
+  ErrorResponse,
+  HealthStatus,
+  PerfilStat,
+  UpdateUsuarioBody,
+  Usuario,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +102,502 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns a list of all registered users
+ * @summary List all users
+ */
+export const getListUsuariosUrl = () => {
+  return `/api/usuarios`;
+};
+
+export const listUsuarios = async (
+  options?: RequestInit,
+): Promise<Usuario[]> => {
+  return customFetch<Usuario[]>(getListUsuariosUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListUsuariosQueryKey = () => {
+  return [`/api/usuarios`] as const;
+};
+
+export const getListUsuariosQueryOptions = <
+  TData = Awaited<ReturnType<typeof listUsuarios>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listUsuarios>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListUsuariosQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsuarios>>> = ({
+    signal,
+  }) => listUsuarios({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listUsuarios>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListUsuariosQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listUsuarios>>
+>;
+export type ListUsuariosQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all users
+ */
+
+export function useListUsuarios<
+  TData = Awaited<ReturnType<typeof listUsuarios>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listUsuarios>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListUsuariosQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new user
+ */
+export const getCreateUsuarioUrl = () => {
+  return `/api/usuarios`;
+};
+
+export const createUsuario = async (
+  createUsuarioBody: CreateUsuarioBody,
+  options?: RequestInit,
+): Promise<Usuario> => {
+  return customFetch<Usuario>(getCreateUsuarioUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createUsuarioBody),
+  });
+};
+
+export const getCreateUsuarioMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createUsuario>>,
+    TError,
+    { data: BodyType<CreateUsuarioBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createUsuario>>,
+  TError,
+  { data: BodyType<CreateUsuarioBody> },
+  TContext
+> => {
+  const mutationKey = ["createUsuario"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createUsuario>>,
+    { data: BodyType<CreateUsuarioBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createUsuario(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateUsuarioMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createUsuario>>
+>;
+export type CreateUsuarioMutationBody = BodyType<CreateUsuarioBody>;
+export type CreateUsuarioMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a new user
+ */
+export const useCreateUsuario = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createUsuario>>,
+    TError,
+    { data: BodyType<CreateUsuarioBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createUsuario>>,
+  TError,
+  { data: BodyType<CreateUsuarioBody> },
+  TContext
+> => {
+  return useMutation(getCreateUsuarioMutationOptions(options));
+};
+
+/**
+ * @summary Get a user by ID
+ */
+export const getGetUsuarioUrl = (id: number) => {
+  return `/api/usuarios/${id}`;
+};
+
+export const getUsuario = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Usuario> => {
+  return customFetch<Usuario>(getGetUsuarioUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetUsuarioQueryKey = (id: number) => {
+  return [`/api/usuarios/${id}`] as const;
+};
+
+export const getGetUsuarioQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUsuario>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUsuario>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUsuarioQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsuario>>> = ({
+    signal,
+  }) => getUsuario(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUsuario>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetUsuarioQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUsuario>>
+>;
+export type GetUsuarioQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get a user by ID
+ */
+
+export function useGetUsuario<
+  TData = Awaited<ReturnType<typeof getUsuario>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUsuario>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetUsuarioQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a user
+ */
+export const getUpdateUsuarioUrl = (id: number) => {
+  return `/api/usuarios/${id}`;
+};
+
+export const updateUsuario = async (
+  id: number,
+  updateUsuarioBody: UpdateUsuarioBody,
+  options?: RequestInit,
+): Promise<Usuario> => {
+  return customFetch<Usuario>(getUpdateUsuarioUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateUsuarioBody),
+  });
+};
+
+export const getUpdateUsuarioMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUsuario>>,
+    TError,
+    { id: number; data: BodyType<UpdateUsuarioBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateUsuario>>,
+  TError,
+  { id: number; data: BodyType<UpdateUsuarioBody> },
+  TContext
+> => {
+  const mutationKey = ["updateUsuario"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateUsuario>>,
+    { id: number; data: BodyType<UpdateUsuarioBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateUsuario(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateUsuarioMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateUsuario>>
+>;
+export type UpdateUsuarioMutationBody = BodyType<UpdateUsuarioBody>;
+export type UpdateUsuarioMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update a user
+ */
+export const useUpdateUsuario = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUsuario>>,
+    TError,
+    { id: number; data: BodyType<UpdateUsuarioBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateUsuario>>,
+  TError,
+  { id: number; data: BodyType<UpdateUsuarioBody> },
+  TContext
+> => {
+  return useMutation(getUpdateUsuarioMutationOptions(options));
+};
+
+/**
+ * @summary Delete a user
+ */
+export const getDeleteUsuarioUrl = (id: number) => {
+  return `/api/usuarios/${id}`;
+};
+
+export const deleteUsuario = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteUsuarioUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteUsuarioMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteUsuario>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteUsuario>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteUsuario"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteUsuario>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteUsuario(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteUsuarioMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteUsuario>>
+>;
+
+export type DeleteUsuarioMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Delete a user
+ */
+export const useDeleteUsuario = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteUsuario>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteUsuario>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteUsuarioMutationOptions(options));
+};
+
+/**
+ * @summary Get user count grouped by profile
+ */
+export const getGetUsuarioStatsByPerfilUrl = () => {
+  return `/api/usuarios/stats/perfil`;
+};
+
+export const getUsuarioStatsByPerfil = async (
+  options?: RequestInit,
+): Promise<PerfilStat[]> => {
+  return customFetch<PerfilStat[]>(getGetUsuarioStatsByPerfilUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetUsuarioStatsByPerfilQueryKey = () => {
+  return [`/api/usuarios/stats/perfil`] as const;
+};
+
+export const getGetUsuarioStatsByPerfilQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUsuarioStatsByPerfil>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getUsuarioStatsByPerfil>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetUsuarioStatsByPerfilQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getUsuarioStatsByPerfil>>
+  > = ({ signal }) => getUsuarioStatsByPerfil({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUsuarioStatsByPerfil>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetUsuarioStatsByPerfilQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUsuarioStatsByPerfil>>
+>;
+export type GetUsuarioStatsByPerfilQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get user count grouped by profile
+ */
+
+export function useGetUsuarioStatsByPerfil<
+  TData = Awaited<ReturnType<typeof getUsuarioStatsByPerfil>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getUsuarioStatsByPerfil>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetUsuarioStatsByPerfilQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

@@ -14,3 +14,99 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns a list of all registered users
+ * @summary List all users
+ */
+export const ListUsuariosResponseItem = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  cpf: zod.string(),
+  email: zod.string(),
+  cargo: zod.string(),
+  login: zod.string(),
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListUsuariosResponse = zod.array(ListUsuariosResponseItem);
+
+/**
+ * @summary Create a new user
+ */
+export const CreateUsuarioBody = zod.object({
+  nome: zod.string(),
+  cpf: zod.string(),
+  email: zod.string(),
+  cargo: zod.string(),
+  login: zod.string(),
+  senha: zod.string(),
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+});
+
+/**
+ * @summary Get a user by ID
+ */
+export const GetUsuarioParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetUsuarioResponse = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  cpf: zod.string(),
+  email: zod.string(),
+  cargo: zod.string(),
+  login: zod.string(),
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update a user
+ */
+export const UpdateUsuarioParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateUsuarioBody = zod.object({
+  nome: zod.string().optional(),
+  cpf: zod.string().optional(),
+  email: zod.string().optional(),
+  cargo: zod.string().optional(),
+  login: zod.string().optional(),
+  senha: zod.string().optional(),
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]).optional(),
+});
+
+export const UpdateUsuarioResponse = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  cpf: zod.string(),
+  email: zod.string(),
+  cargo: zod.string(),
+  login: zod.string(),
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a user
+ */
+export const DeleteUsuarioParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Get user count grouped by profile
+ */
+export const GetUsuarioStatsByPerfilResponseItem = zod.object({
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+  count: zod.number(),
+});
+export const GetUsuarioStatsByPerfilResponse = zod.array(
+  GetUsuarioStatsByPerfilResponseItem,
+);

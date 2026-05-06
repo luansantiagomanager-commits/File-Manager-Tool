@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: usuarios
+    description: User management operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,152 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /usuarios:
+    get:
+      operationId: listUsuarios
+      tags: [usuarios]
+      summary: List all users
+      description: Returns a list of all registered users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Usuario"
+    post:
+      operationId: createUsuario
+      tags: [usuarios]
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUsuarioBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Usuario"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict (CPF, email or login already exists)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /usuarios/{id}:
+    get:
+      operationId: getUsuario
+      tags: [usuarios]
+      summary: Get a user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Usuario"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateUsuario
+      tags: [usuarios]
+      summary: Update a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUsuarioBody"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Usuario"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteUsuario
+      tags: [usuarios]
+      summary: Delete a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: User deleted
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /usuarios/stats/perfil:
+    get:
+      operationId: getUsuarioStatsByPerfil
+      tags: [usuarios]
+      summary: Get user count grouped by profile
+      responses:
+        "200":
+          description: User counts by profile
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerfilStat"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +182,106 @@ components:
       required:
         - status
 
+    Perfil:
+      type: string
+      enum:
+        - ADMIN
+        - GERENTE
+        - COLABORADOR
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        cpf:
+          type: string
+        email:
+          type: string
+        cargo:
+          type: string
+        login:
+          type: string
+        perfil:
+          $ref: "#/components/schemas/Perfil"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - nome
+        - cpf
+        - email
+        - cargo
+        - login
+        - perfil
+        - createdAt
+        - updatedAt
+
+    CreateUsuarioBody:
+      type: object
+      properties:
+        nome:
+          type: string
+        cpf:
+          type: string
+        email:
+          type: string
+        cargo:
+          type: string
+        login:
+          type: string
+        senha:
+          type: string
+        perfil:
+          $ref: "#/components/schemas/Perfil"
+      required:
+        - nome
+        - cpf
+        - email
+        - cargo
+        - login
+        - senha
+        - perfil
+
+    UpdateUsuarioBody:
+      type: object
+      properties:
+        nome:
+          type: string
+        cpf:
+          type: string
+        email:
+          type: string
+        cargo:
+          type: string
+        login:
+          type: string
+        senha:
+          type: string
+        perfil:
+          $ref: "#/components/schemas/Perfil"
+
+    PerfilStat:
+      type: object
+      properties:
+        perfil:
+          $ref: "#/components/schemas/Perfil"
+        count:
+          type: integer
+      required:
+        - perfil
+        - count
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

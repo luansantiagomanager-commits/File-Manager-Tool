@@ -1,10 +1,11 @@
-# [Project name]
+# Sistema de Gestão de Projetos
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A web app for managing project team members, registering users with roles (Admin, Gerente, Colaborador), and tracking their organizational information.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080, proxied via `/api`)
+- `pnpm --filter @workspace/gestao-projetos run dev` — run the frontend (proxied at `/`)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -14,7 +15,8 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- Frontend: React + Vite + Tailwind CSS (shadcn/ui), Wouter routing, TanStack React Query
+- API: Express 5 + Pino logging
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
@@ -22,15 +24,27 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — single source of truth for API contracts
+- `lib/db/src/schema/usuarios.ts` — usuarios table + Drizzle types
+- `artifacts/api-server/src/routes/usuarios.ts` — user CRUD routes
+- `artifacts/gestao-projetos/src/` — React frontend
+- `lib/api-client-react/src/generated/` — generated React Query hooks
+- `lib/api-zod/src/generated/api.ts` — generated Zod schemas (server validation)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Passwords are hashed with SHA-256 before storage (field: `senha_hash`)
+- `senhaHash` is never returned from any API response (select list is explicit on all routes)
+- `GET /api/usuarios/stats/perfil` must be registered BEFORE `GET /api/usuarios/:id` in Express to avoid route shadowing
+- Orval `schemas` option was removed from the zod output config to avoid duplicate exports between `generated/api.ts` and `generated/types/`
+- `lib/api-zod/src/index.ts` exports only from `./generated/api` (not types) to avoid TS2308 conflicts
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- List all registered users with search, profile badges (Admin / Gerente / Colaborador), and delete
+- Register new users with all required fields and role assignment
+- View and edit individual user details
+- Sidebar shows profile count breakdown (Admin / Gerente / Colaborador stats)
 
 ## User preferences
 
@@ -38,7 +52,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Always re-run codegen after editing `openapi.yaml`
+- After codegen, manually ensure `lib/api-zod/src/index.ts` only has `export * from "./generated/api"` (orval may not update it cleanly)
+- Do not run `pnpm dev` at workspace root — use individual artifact workflows
 
 ## Pointers
 

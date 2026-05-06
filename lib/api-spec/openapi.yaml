@@ -12,13 +12,20 @@ tags:
     description: Health operations
   - name: usuarios
     description: User management operations
+  - name: projetos
+    description: Project management operations
+  - name: tarefas
+    description: Task management operations
+  - name: membros
+    description: Project team member operations
+  - name: dashboard
+    description: Dashboard and reporting operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -27,12 +34,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  # ── Usuarios ──────────────────────────────────────────────────
   /usuarios:
     get:
       operationId: listUsuarios
       tags: [usuarios]
       summary: List all users
-      description: Returns a list of all registered users
       responses:
         "200":
           description: List of users
@@ -66,11 +73,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "409":
-          description: Conflict (CPF, email or login already exists)
+          description: Conflict
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /usuarios/stats/perfil:
+    get:
+      operationId: getUsuarioStatsByPerfil
+      tags: [usuarios]
+      summary: Get user count grouped by profile
+      responses:
+        "200":
+          description: User counts by profile
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerfilStat"
 
   /usuarios/{id}:
     get:
@@ -151,26 +173,388 @@ paths:
         "204":
           description: User deleted
         "404":
-          description: User not found
+          description: Not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /usuarios/stats/perfil:
+  # ── Projetos ──────────────────────────────────────────────────
+  /projetos:
     get:
-      operationId: getUsuarioStatsByPerfil
-      tags: [usuarios]
-      summary: Get user count grouped by profile
+      operationId: listProjetos
+      tags: [projetos]
+      summary: List all projects
       responses:
         "200":
-          description: User counts by profile
+          description: List of projects
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/PerfilStat"
+                  $ref: "#/components/schemas/Projeto"
+    post:
+      operationId: createProjeto
+      tags: [projetos]
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjetoBody"
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Projeto"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /projetos/stats/status:
+    get:
+      operationId: getProjetoStatsByStatus
+      tags: [projetos]
+      summary: Get project count grouped by status
+      responses:
+        "200":
+          description: Project counts by status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StatusStat"
+
+  /projetos/{id}:
+    get:
+      operationId: getProjeto
+      tags: [projetos]
+      summary: Get a project by ID (with members and tasks)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project with details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjetoDetalhe"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateProjeto
+      tags: [projetos]
+      summary: Update a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjetoBody"
+      responses:
+        "200":
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Projeto"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProjeto
+      tags: [projetos]
+      summary: Delete a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Project deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Membros de Projeto ─────────────────────────────────────────
+  /projetos/{projetoId}/membros:
+    get:
+      operationId: listProjetoMembros
+      tags: [membros]
+      summary: List members of a project
+      parameters:
+        - name: projetoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjetoMembro"
+    post:
+      operationId: addProjetoMembro
+      tags: [membros]
+      summary: Add a member to a project
+      parameters:
+        - name: projetoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddProjetoMembroBody"
+      responses:
+        "201":
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjetoMembro"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already a member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /projetos/{projetoId}/membros/{usuarioId}:
+    delete:
+      operationId: removeProjetoMembro
+      tags: [membros]
+      summary: Remove a member from a project
+      parameters:
+        - name: projetoId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: usuarioId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Member removed
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Tarefas ────────────────────────────────────────────────────
+  /projetos/{projetoId}/tarefas:
+    get:
+      operationId: listTarefas
+      tags: [tarefas]
+      summary: List tasks for a project
+      parameters:
+        - name: projetoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tarefa"
+    post:
+      operationId: createTarefa
+      tags: [tarefas]
+      summary: Create a task in a project
+      parameters:
+        - name: projetoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTarefaBody"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tarefa"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /projetos/{projetoId}/tarefas/{id}:
+    patch:
+      operationId: updateTarefa
+      tags: [tarefas]
+      summary: Update a task
+      parameters:
+        - name: projetoId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTarefaBody"
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tarefa"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteTarefa
+      tags: [tarefas]
+      summary: Delete a task
+      parameters:
+        - name: projetoId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Task deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Dashboard ─────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get overall dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/tarefas-por-usuario:
+    get:
+      operationId: getTarefasPorUsuario
+      tags: [dashboard]
+      summary: Get task count per user (workload report)
+      responses:
+        "200":
+          description: Workload per user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UsuarioWorkload"
+
+  /dashboard/projetos-com-prazo:
+    get:
+      operationId: getProjetosComPrazo
+      tags: [dashboard]
+      summary: Get projects ordered by deadline (soonest first)
+      responses:
+        "200":
+          description: Projects with deadlines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjetoResumo"
 
 components:
   schemas:
@@ -182,13 +566,32 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    # ── Enums ──────────────────────────────────────────────────
     Perfil:
       type: string
-      enum:
-        - ADMIN
-        - GERENTE
-        - COLABORADOR
+      enum: [ADMIN, GERENTE, COLABORADOR]
 
+    StatusProjeto:
+      type: string
+      enum: [PLANEJAMENTO, EM_ANDAMENTO, CONCLUIDO, CANCELADO]
+
+    StatusTarefa:
+      type: string
+      enum: [PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA]
+
+    PrioridadeTarefa:
+      type: string
+      enum: [BAIXA, MEDIA, ALTA, CRITICA]
+
+    # ── Usuario ────────────────────────────────────────────────
     Usuario:
       type: object
       properties:
@@ -240,14 +643,7 @@ components:
           type: string
         perfil:
           $ref: "#/components/schemas/Perfil"
-      required:
-        - nome
-        - cpf
-        - email
-        - cargo
-        - login
-        - senha
-        - perfil
+      required: [nome, cpf, email, cargo, login, senha, perfil]
 
     UpdateUsuarioBody:
       type: object
@@ -274,14 +670,327 @@ components:
           $ref: "#/components/schemas/Perfil"
         count:
           type: integer
-      required:
-        - perfil
-        - count
+      required: [perfil, count]
 
-    ErrorResponse:
+    # ── Projeto ────────────────────────────────────────────────
+    Projeto:
       type: object
       properties:
-        error:
+        id:
+          type: integer
+        nome:
           type: string
+        descricao:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/StatusProjeto"
+        dataInicio:
+          type: string
+          format: date-time
+        dataPrazo:
+          type: string
+          format: date-time
+        gerenteId:
+          type: integer
+        gerenteNome:
+          type: string
+        totalMembros:
+          type: integer
+        totalTarefas:
+          type: integer
+        tarefasConcluidas:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
       required:
-        - error
+        - id
+        - nome
+        - status
+        - dataInicio
+        - dataPrazo
+        - gerenteId
+        - gerenteNome
+        - totalMembros
+        - totalTarefas
+        - tarefasConcluidas
+        - createdAt
+        - updatedAt
+
+    ProjetoDetalhe:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        descricao:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/StatusProjeto"
+        dataInicio:
+          type: string
+          format: date-time
+        dataPrazo:
+          type: string
+          format: date-time
+        gerenteId:
+          type: integer
+        gerenteNome:
+          type: string
+        membros:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjetoMembro"
+        tarefas:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tarefa"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - nome
+        - status
+        - dataInicio
+        - dataPrazo
+        - gerenteId
+        - gerenteNome
+        - membros
+        - tarefas
+        - createdAt
+        - updatedAt
+
+    CreateProjetoBody:
+      type: object
+      properties:
+        nome:
+          type: string
+        descricao:
+          type: string
+        status:
+          $ref: "#/components/schemas/StatusProjeto"
+        dataInicio:
+          type: string
+          format: date-time
+        dataPrazo:
+          type: string
+          format: date-time
+        gerenteId:
+          type: integer
+      required: [nome, status, dataInicio, dataPrazo, gerenteId]
+
+    UpdateProjetoBody:
+      type: object
+      properties:
+        nome:
+          type: string
+        descricao:
+          type: string
+        status:
+          $ref: "#/components/schemas/StatusProjeto"
+        dataInicio:
+          type: string
+          format: date-time
+        dataPrazo:
+          type: string
+          format: date-time
+        gerenteId:
+          type: integer
+
+    ProjetoResumo:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        status:
+          $ref: "#/components/schemas/StatusProjeto"
+        dataPrazo:
+          type: string
+          format: date-time
+        gerenteNome:
+          type: string
+        totalTarefas:
+          type: integer
+        tarefasConcluidas:
+          type: integer
+      required: [id, nome, status, dataPrazo, gerenteNome, totalTarefas, tarefasConcluidas]
+
+    StatusStat:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/StatusProjeto"
+        count:
+          type: integer
+      required: [status, count]
+
+    # ── ProjetoMembro ──────────────────────────────────────────
+    ProjetoMembro:
+      type: object
+      properties:
+        id:
+          type: integer
+        projetoId:
+          type: integer
+        usuarioId:
+          type: integer
+        usuarioNome:
+          type: string
+        usuarioCargo:
+          type: string
+        usuarioPerfil:
+          $ref: "#/components/schemas/Perfil"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - projetoId
+        - usuarioId
+        - usuarioNome
+        - usuarioCargo
+        - usuarioPerfil
+        - createdAt
+
+    AddProjetoMembroBody:
+      type: object
+      properties:
+        usuarioId:
+          type: integer
+      required: [usuarioId]
+
+    # ── Tarefa ─────────────────────────────────────────────────
+    Tarefa:
+      type: object
+      properties:
+        id:
+          type: integer
+        titulo:
+          type: string
+        descricao:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/StatusTarefa"
+        prioridade:
+          $ref: "#/components/schemas/PrioridadeTarefa"
+        projetoId:
+          type: integer
+        responsavelId:
+          type: ["integer", "null"]
+        responsavelNome:
+          type: ["string", "null"]
+        dataVencimento:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - titulo
+        - status
+        - prioridade
+        - projetoId
+        - createdAt
+        - updatedAt
+
+    CreateTarefaBody:
+      type: object
+      properties:
+        titulo:
+          type: string
+        descricao:
+          type: string
+        status:
+          $ref: "#/components/schemas/StatusTarefa"
+        prioridade:
+          $ref: "#/components/schemas/PrioridadeTarefa"
+        responsavelId:
+          type: integer
+        dataVencimento:
+          type: string
+          format: date-time
+      required: [titulo, status, prioridade]
+
+    UpdateTarefaBody:
+      type: object
+      properties:
+        titulo:
+          type: string
+        descricao:
+          type: string
+        status:
+          $ref: "#/components/schemas/StatusTarefa"
+        prioridade:
+          $ref: "#/components/schemas/PrioridadeTarefa"
+        responsavelId:
+          type: integer
+        dataVencimento:
+          type: string
+          format: date-time
+
+    # ── Dashboard ──────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      properties:
+        totalProjetos:
+          type: integer
+        projetosEmAndamento:
+          type: integer
+        projetosConcluidos:
+          type: integer
+        projetosAtrasados:
+          type: integer
+        totalTarefas:
+          type: integer
+        tarefasConcluidas:
+          type: integer
+        tarefasPendentes:
+          type: integer
+        totalUsuarios:
+          type: integer
+      required:
+        - totalProjetos
+        - projetosEmAndamento
+        - projetosConcluidos
+        - projetosAtrasados
+        - totalTarefas
+        - tarefasConcluidas
+        - tarefasPendentes
+        - totalUsuarios
+
+    UsuarioWorkload:
+      type: object
+      properties:
+        usuarioId:
+          type: integer
+        usuarioNome:
+          type: string
+        totalTarefas:
+          type: integer
+        tarefasConcluidas:
+          type: integer
+        tarefasPendentes:
+          type: integer
+        tarefasAtrasadas:
+          type: integer
+      required:
+        - usuarioId
+        - usuarioNome
+        - totalTarefas
+        - tarefasConcluidas
+        - tarefasPendentes
+        - tarefasAtrasadas

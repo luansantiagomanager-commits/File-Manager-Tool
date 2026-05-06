@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Users, UserPlus, Settings, LogOut, BarChart3, LayoutDashboard } from "lucide-react";
+import { Users, UserPlus, Settings, LogOut, BarChart3, LayoutDashboard, FolderKanban } from "lucide-react";
 import { useGetUsuarioStatsByPerfil } from "@workspace/api-client-react";
 
 export function Sidebar({ children }: { children: React.ReactNode }) {
@@ -22,17 +22,26 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           <div className="text-xs font-medium text-muted-foreground px-2 py-2 mb-1 uppercase tracking-wider">
+            Principal
+          </div>
+          
+          <Link href="/dashboard" className={`flex items-center gap-3 px-2 py-2 rounded-md transition-colors ${location === "/dashboard" ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Dashboard</span>
+          </Link>
+          
+          <Link href="/projetos" className={`flex items-center gap-3 px-2 py-2 rounded-md transition-colors ${location === "/projetos" || location.match(/^\/projetos\/\d+$/) || location === "/projetos/novo" || location.match(/^\/projetos\/\d+\/editar$/) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+            <FolderKanban className="h-4 w-4" />
+            <span>Projetos</span>
+          </Link>
+
+          <div className="text-xs font-medium text-muted-foreground px-2 py-2 mt-4 mb-1 uppercase tracking-wider">
             Administração
           </div>
           
-          <Link href="/usuarios" className={`flex items-center gap-3 px-2 py-2 rounded-md transition-colors ${location === "/usuarios" || location.match(/^\/usuarios\/\d+$/) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+          <Link href="/usuarios" className={`flex items-center gap-3 px-2 py-2 rounded-md transition-colors ${location === "/usuarios" || location.match(/^\/usuarios\/\d+$/) || location === "/usuarios/novo" || location.match(/^\/usuarios\/\d+\/editar$/) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
             <Users className="h-4 w-4" />
             <span>Usuários</span>
-          </Link>
-          
-          <Link href="/usuarios/novo" className={`flex items-center gap-3 px-2 py-2 rounded-md transition-colors ${location === "/usuarios/novo" ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
-            <UserPlus className="h-4 w-4" />
-            <span>Novo Usuário</span>
           </Link>
         </nav>
 
@@ -40,7 +49,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
           <div className="p-4 border-t border-border">
             <div className="text-xs font-medium text-muted-foreground px-2 mb-3 uppercase tracking-wider flex items-center gap-2">
               <BarChart3 className="h-3 w-3" />
-              <span>Visão Geral</span>
+              <span>Visão Geral Usuários</span>
             </div>
             <div className="space-y-2 px-2">
               {stats.map((stat) => (

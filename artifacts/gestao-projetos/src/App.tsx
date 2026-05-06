@@ -10,6 +10,12 @@ import { NovoUsuarioPage } from "@/pages/usuarios/novo";
 import { EditarUsuarioPage } from "@/pages/usuarios/editar";
 import { DetalhesUsuarioPage } from "@/pages/usuarios/detalhes";
 
+import { DashboardPage } from "@/pages/dashboard/index";
+import { ProjetosPage } from "@/pages/projetos/index";
+import { NovoProjetoPage } from "@/pages/projetos/novo";
+import { EditarProjetoPage } from "@/pages/projetos/editar";
+import { DetalhesProjetoPage } from "@/pages/projetos/detalhes";
+
 const queryClient = new QueryClient();
 
 function Router() {
@@ -17,9 +23,16 @@ function Router() {
     <Sidebar>
       <Switch>
         <Route path="/">
-          <Redirect to="/usuarios" />
+          <Redirect to="/dashboard" />
         </Route>
         
+        <Route path="/dashboard" component={DashboardPage} />
+        
+        <Route path="/projetos" component={ProjetosPage} />
+        <Route path="/projetos/novo" component={NovoProjetoPage} />
+        <Route path="/projetos/:id/editar" component={EditarProjetoPage} />
+        <Route path="/projetos/:id" component={DetalhesProjetoPage} />
+
         <Route path="/usuarios" component={UsuariosPage} />
         <Route path="/usuarios/novo" component={NovoUsuarioPage} />
         <Route path="/usuarios/:id/editar" component={EditarUsuarioPage} />

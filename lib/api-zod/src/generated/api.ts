@@ -8,7 +8,6 @@
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -16,7 +15,6 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
- * Returns a list of all registered users
  * @summary List all users
  */
 export const ListUsuariosResponseItem = zod.object({
@@ -44,6 +42,17 @@ export const CreateUsuarioBody = zod.object({
   senha: zod.string(),
   perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
 });
+
+/**
+ * @summary Get user count grouped by profile
+ */
+export const GetUsuarioStatsByPerfilResponseItem = zod.object({
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+  count: zod.number(),
+});
+export const GetUsuarioStatsByPerfilResponse = zod.array(
+  GetUsuarioStatsByPerfilResponseItem,
+);
 
 /**
  * @summary Get a user by ID
@@ -101,12 +110,294 @@ export const DeleteUsuarioParams = zod.object({
 });
 
 /**
- * @summary Get user count grouped by profile
+ * @summary List all projects
  */
-export const GetUsuarioStatsByPerfilResponseItem = zod.object({
-  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+export const ListProjetosResponseItem = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  descricao: zod.string().nullish(),
+  status: zod.enum(["PLANEJAMENTO", "EM_ANDAMENTO", "CONCLUIDO", "CANCELADO"]),
+  dataInicio: zod.coerce.date(),
+  dataPrazo: zod.coerce.date(),
+  gerenteId: zod.number(),
+  gerenteNome: zod.string(),
+  totalMembros: zod.number(),
+  totalTarefas: zod.number(),
+  tarefasConcluidas: zod.number(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListProjetosResponse = zod.array(ListProjetosResponseItem);
+
+/**
+ * @summary Create a new project
+ */
+export const CreateProjetoBody = zod.object({
+  nome: zod.string(),
+  descricao: zod.string().optional(),
+  status: zod.enum(["PLANEJAMENTO", "EM_ANDAMENTO", "CONCLUIDO", "CANCELADO"]),
+  dataInicio: zod.coerce.date(),
+  dataPrazo: zod.coerce.date(),
+  gerenteId: zod.number(),
+});
+
+/**
+ * @summary Get project count grouped by status
+ */
+export const GetProjetoStatsByStatusResponseItem = zod.object({
+  status: zod.enum(["PLANEJAMENTO", "EM_ANDAMENTO", "CONCLUIDO", "CANCELADO"]),
   count: zod.number(),
 });
-export const GetUsuarioStatsByPerfilResponse = zod.array(
-  GetUsuarioStatsByPerfilResponseItem,
+export const GetProjetoStatsByStatusResponse = zod.array(
+  GetProjetoStatsByStatusResponseItem,
+);
+
+/**
+ * @summary Get a project by ID (with members and tasks)
+ */
+export const GetProjetoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetProjetoResponse = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  descricao: zod.string().nullish(),
+  status: zod.enum(["PLANEJAMENTO", "EM_ANDAMENTO", "CONCLUIDO", "CANCELADO"]),
+  dataInicio: zod.coerce.date(),
+  dataPrazo: zod.coerce.date(),
+  gerenteId: zod.number(),
+  gerenteNome: zod.string(),
+  membros: zod.array(
+    zod.object({
+      id: zod.number(),
+      projetoId: zod.number(),
+      usuarioId: zod.number(),
+      usuarioNome: zod.string(),
+      usuarioCargo: zod.string(),
+      usuarioPerfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+  tarefas: zod.array(
+    zod.object({
+      id: zod.number(),
+      titulo: zod.string(),
+      descricao: zod.string().nullish(),
+      status: zod.enum(["PENDENTE", "EM_ANDAMENTO", "CONCLUIDA", "CANCELADA"]),
+      prioridade: zod.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]),
+      projetoId: zod.number(),
+      responsavelId: zod.number().nullish(),
+      responsavelNome: zod.string().nullish(),
+      dataVencimento: zod.coerce.date().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update a project
+ */
+export const UpdateProjetoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateProjetoBody = zod.object({
+  nome: zod.string().optional(),
+  descricao: zod.string().optional(),
+  status: zod
+    .enum(["PLANEJAMENTO", "EM_ANDAMENTO", "CONCLUIDO", "CANCELADO"])
+    .optional(),
+  dataInicio: zod.coerce.date().optional(),
+  dataPrazo: zod.coerce.date().optional(),
+  gerenteId: zod.number().optional(),
+});
+
+export const UpdateProjetoResponse = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  descricao: zod.string().nullish(),
+  status: zod.enum(["PLANEJAMENTO", "EM_ANDAMENTO", "CONCLUIDO", "CANCELADO"]),
+  dataInicio: zod.coerce.date(),
+  dataPrazo: zod.coerce.date(),
+  gerenteId: zod.number(),
+  gerenteNome: zod.string(),
+  totalMembros: zod.number(),
+  totalTarefas: zod.number(),
+  tarefasConcluidas: zod.number(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a project
+ */
+export const DeleteProjetoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List members of a project
+ */
+export const ListProjetoMembrosParams = zod.object({
+  projetoId: zod.coerce.number(),
+});
+
+export const ListProjetoMembrosResponseItem = zod.object({
+  id: zod.number(),
+  projetoId: zod.number(),
+  usuarioId: zod.number(),
+  usuarioNome: zod.string(),
+  usuarioCargo: zod.string(),
+  usuarioPerfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+  createdAt: zod.coerce.date(),
+});
+export const ListProjetoMembrosResponse = zod.array(
+  ListProjetoMembrosResponseItem,
+);
+
+/**
+ * @summary Add a member to a project
+ */
+export const AddProjetoMembroParams = zod.object({
+  projetoId: zod.coerce.number(),
+});
+
+export const AddProjetoMembroBody = zod.object({
+  usuarioId: zod.number(),
+});
+
+/**
+ * @summary Remove a member from a project
+ */
+export const RemoveProjetoMembroParams = zod.object({
+  projetoId: zod.coerce.number(),
+  usuarioId: zod.coerce.number(),
+});
+
+/**
+ * @summary List tasks for a project
+ */
+export const ListTarefasParams = zod.object({
+  projetoId: zod.coerce.number(),
+});
+
+export const ListTarefasResponseItem = zod.object({
+  id: zod.number(),
+  titulo: zod.string(),
+  descricao: zod.string().nullish(),
+  status: zod.enum(["PENDENTE", "EM_ANDAMENTO", "CONCLUIDA", "CANCELADA"]),
+  prioridade: zod.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]),
+  projetoId: zod.number(),
+  responsavelId: zod.number().nullish(),
+  responsavelNome: zod.string().nullish(),
+  dataVencimento: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListTarefasResponse = zod.array(ListTarefasResponseItem);
+
+/**
+ * @summary Create a task in a project
+ */
+export const CreateTarefaParams = zod.object({
+  projetoId: zod.coerce.number(),
+});
+
+export const CreateTarefaBody = zod.object({
+  titulo: zod.string(),
+  descricao: zod.string().optional(),
+  status: zod.enum(["PENDENTE", "EM_ANDAMENTO", "CONCLUIDA", "CANCELADA"]),
+  prioridade: zod.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]),
+  responsavelId: zod.number().optional(),
+  dataVencimento: zod.coerce.date().optional(),
+});
+
+/**
+ * @summary Update a task
+ */
+export const UpdateTarefaParams = zod.object({
+  projetoId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const UpdateTarefaBody = zod.object({
+  titulo: zod.string().optional(),
+  descricao: zod.string().optional(),
+  status: zod
+    .enum(["PENDENTE", "EM_ANDAMENTO", "CONCLUIDA", "CANCELADA"])
+    .optional(),
+  prioridade: zod.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]).optional(),
+  responsavelId: zod.number().optional(),
+  dataVencimento: zod.coerce.date().optional(),
+});
+
+export const UpdateTarefaResponse = zod.object({
+  id: zod.number(),
+  titulo: zod.string(),
+  descricao: zod.string().nullish(),
+  status: zod.enum(["PENDENTE", "EM_ANDAMENTO", "CONCLUIDA", "CANCELADA"]),
+  prioridade: zod.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]),
+  projetoId: zod.number(),
+  responsavelId: zod.number().nullish(),
+  responsavelNome: zod.string().nullish(),
+  dataVencimento: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a task
+ */
+export const DeleteTarefaParams = zod.object({
+  projetoId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Get overall dashboard statistics
+ */
+export const GetDashboardStatsResponse = zod.object({
+  totalProjetos: zod.number(),
+  projetosEmAndamento: zod.number(),
+  projetosConcluidos: zod.number(),
+  projetosAtrasados: zod.number(),
+  totalTarefas: zod.number(),
+  tarefasConcluidas: zod.number(),
+  tarefasPendentes: zod.number(),
+  totalUsuarios: zod.number(),
+});
+
+/**
+ * @summary Get task count per user (workload report)
+ */
+export const GetTarefasPorUsuarioResponseItem = zod.object({
+  usuarioId: zod.number(),
+  usuarioNome: zod.string(),
+  totalTarefas: zod.number(),
+  tarefasConcluidas: zod.number(),
+  tarefasPendentes: zod.number(),
+  tarefasAtrasadas: zod.number(),
+});
+export const GetTarefasPorUsuarioResponse = zod.array(
+  GetTarefasPorUsuarioResponseItem,
+);
+
+/**
+ * @summary Get projects ordered by deadline (soonest first)
+ */
+export const GetProjetosComPrazoResponseItem = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  status: zod.enum(["PLANEJAMENTO", "EM_ANDAMENTO", "CONCLUIDO", "CANCELADO"]),
+  dataPrazo: zod.coerce.date(),
+  gerenteNome: zod.string(),
+  totalTarefas: zod.number(),
+  tarefasConcluidas: zod.number(),
+});
+export const GetProjetosComPrazoResponse = zod.array(
+  GetProjetosComPrazoResponseItem,
 );

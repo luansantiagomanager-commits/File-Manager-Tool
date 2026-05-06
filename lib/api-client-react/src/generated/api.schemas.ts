@@ -9,12 +9,44 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface ErrorResponse {
+  error: string;
+}
+
 export type Perfil = (typeof Perfil)[keyof typeof Perfil];
 
 export const Perfil = {
   ADMIN: "ADMIN",
   GERENTE: "GERENTE",
   COLABORADOR: "COLABORADOR",
+} as const;
+
+export type StatusProjeto = (typeof StatusProjeto)[keyof typeof StatusProjeto];
+
+export const StatusProjeto = {
+  PLANEJAMENTO: "PLANEJAMENTO",
+  EM_ANDAMENTO: "EM_ANDAMENTO",
+  CONCLUIDO: "CONCLUIDO",
+  CANCELADO: "CANCELADO",
+} as const;
+
+export type StatusTarefa = (typeof StatusTarefa)[keyof typeof StatusTarefa];
+
+export const StatusTarefa = {
+  PENDENTE: "PENDENTE",
+  EM_ANDAMENTO: "EM_ANDAMENTO",
+  CONCLUIDA: "CONCLUIDA",
+  CANCELADA: "CANCELADA",
+} as const;
+
+export type PrioridadeTarefa =
+  (typeof PrioridadeTarefa)[keyof typeof PrioridadeTarefa];
+
+export const PrioridadeTarefa = {
+  BAIXA: "BAIXA",
+  MEDIA: "MEDIA",
+  ALTA: "ALTA",
+  CRITICA: "CRITICA",
 } as const;
 
 export interface Usuario {
@@ -54,6 +86,138 @@ export interface PerfilStat {
   count: number;
 }
 
-export interface ErrorResponse {
-  error: string;
+export interface Projeto {
+  id: number;
+  nome: string;
+  /** @nullable */
+  descricao?: string | null;
+  status: StatusProjeto;
+  dataInicio: string;
+  dataPrazo: string;
+  gerenteId: number;
+  gerenteNome: string;
+  totalMembros: number;
+  totalTarefas: number;
+  tarefasConcluidas: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjetoMembro {
+  id: number;
+  projetoId: number;
+  usuarioId: number;
+  usuarioNome: string;
+  usuarioCargo: string;
+  usuarioPerfil: Perfil;
+  createdAt: string;
+}
+
+export interface Tarefa {
+  id: number;
+  titulo: string;
+  /** @nullable */
+  descricao?: string | null;
+  status: StatusTarefa;
+  prioridade: PrioridadeTarefa;
+  projetoId: number;
+  /** @nullable */
+  responsavelId?: number | null;
+  /** @nullable */
+  responsavelNome?: string | null;
+  /** @nullable */
+  dataVencimento?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjetoDetalhe {
+  id: number;
+  nome: string;
+  /** @nullable */
+  descricao?: string | null;
+  status: StatusProjeto;
+  dataInicio: string;
+  dataPrazo: string;
+  gerenteId: number;
+  gerenteNome: string;
+  membros: ProjetoMembro[];
+  tarefas: Tarefa[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProjetoBody {
+  nome: string;
+  descricao?: string;
+  status: StatusProjeto;
+  dataInicio: string;
+  dataPrazo: string;
+  gerenteId: number;
+}
+
+export interface UpdateProjetoBody {
+  nome?: string;
+  descricao?: string;
+  status?: StatusProjeto;
+  dataInicio?: string;
+  dataPrazo?: string;
+  gerenteId?: number;
+}
+
+export interface ProjetoResumo {
+  id: number;
+  nome: string;
+  status: StatusProjeto;
+  dataPrazo: string;
+  gerenteNome: string;
+  totalTarefas: number;
+  tarefasConcluidas: number;
+}
+
+export interface StatusStat {
+  status: StatusProjeto;
+  count: number;
+}
+
+export interface AddProjetoMembroBody {
+  usuarioId: number;
+}
+
+export interface CreateTarefaBody {
+  titulo: string;
+  descricao?: string;
+  status: StatusTarefa;
+  prioridade: PrioridadeTarefa;
+  responsavelId?: number;
+  dataVencimento?: string;
+}
+
+export interface UpdateTarefaBody {
+  titulo?: string;
+  descricao?: string;
+  status?: StatusTarefa;
+  prioridade?: PrioridadeTarefa;
+  responsavelId?: number;
+  dataVencimento?: string;
+}
+
+export interface DashboardStats {
+  totalProjetos: number;
+  projetosEmAndamento: number;
+  projetosConcluidos: number;
+  projetosAtrasados: number;
+  totalTarefas: number;
+  tarefasConcluidas: number;
+  tarefasPendentes: number;
+  totalUsuarios: number;
+}
+
+export interface UsuarioWorkload {
+  usuarioId: number;
+  usuarioNome: string;
+  totalTarefas: number;
+  tarefasConcluidas: number;
+  tarefasPendentes: number;
+  tarefasAtrasadas: number;
 }

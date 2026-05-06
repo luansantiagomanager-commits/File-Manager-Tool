@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, CalendarDays, Users, CheckSquare } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, CalendarDays, Users, CheckSquare, FolderKanban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function ProjetosPage() {

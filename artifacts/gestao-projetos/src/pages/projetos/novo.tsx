@@ -57,7 +57,7 @@ export function NovoProjetoPage() {
       onError: (error) => {
         toast({ 
           title: "Erro ao criar projeto", 
-          description: error.error || "Ocorreu um erro inesperado",
+          description: error.data?.error || "Ocorreu um erro inesperado",
           variant: "destructive" 
         });
       }

@@ -3,6 +3,7 @@ import { useLocation, useParams } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { format } from "date-fns";
 import { 
   useUpdateProjeto, 
   useListUsuarios, 
@@ -61,12 +62,17 @@ export function EditarProjetoPage() {
 
   useEffect(() => {
     if (projeto) {
+      const toDateStr = (val: Date | string | null | undefined) => {
+        if (!val) return "";
+        const d = val instanceof Date ? val : new Date(val);
+        return format(d, "yyyy-MM-dd");
+      };
       form.reset({
         nome: projeto.nome,
         descricao: projeto.descricao || "",
         status: projeto.status,
-        dataInicio: projeto.dataInicio,
-        dataPrazo: projeto.dataPrazo,
+        dataInicio: toDateStr(projeto.dataInicio),
+        dataPrazo: toDateStr(projeto.dataPrazo),
         gerenteId: projeto.gerenteId,
       });
     }
@@ -84,7 +90,7 @@ export function EditarProjetoPage() {
       onError: (error) => {
         toast({ 
           title: "Erro ao atualizar projeto", 
-          description: error.error || "Ocorreu um erro inesperado",
+          description: error.data?.error || "Ocorreu um erro inesperado",
           variant: "destructive" 
         });
       }

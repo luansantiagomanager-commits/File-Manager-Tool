@@ -6,7 +6,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useCreateUsuario, getListUsuariosQueryKey, getGetUsuarioStatsByPerfilQueryKey } from "@workspace/api-client-react";
-import { Perfil } from "@workspace/api-client-react/src/generated/api.schemas";
+import { Perfil } from "@workspace/api-client-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

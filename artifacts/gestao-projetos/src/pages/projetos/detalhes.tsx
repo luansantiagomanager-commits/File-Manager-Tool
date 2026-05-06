@@ -49,6 +49,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+import { format as dateFnsFormat } from "date-fns";
 import { ArrowLeft, Edit, CalendarDays, Users, CheckSquare, Plus, Trash2, Loader2, MoreHorizontal, UserMinus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -93,7 +94,7 @@ export function DetalhesProjetoPage() {
         setMemberIdToAdd("");
       },
       onError: (error) => {
-        toast({ title: "Erro ao adicionar membro", description: error.error, variant: "destructive" });
+        toast({ title: "Erro ao adicionar membro", description: error.data?.error, variant: "destructive" });
       }
     }
   });
@@ -105,7 +106,7 @@ export function DetalhesProjetoPage() {
         queryClient.invalidateQueries({ queryKey: getGetProjetoQueryKey(id) });
       },
       onError: (error) => {
-        toast({ title: "Erro ao remover membro", description: error.error, variant: "destructive" });
+        toast({ title: "Erro ao remover membro", description: error.data?.error, variant: "destructive" });
       }
     }
   });
@@ -120,7 +121,7 @@ export function DetalhesProjetoPage() {
         tarefaForm.reset();
       },
       onError: (error) => {
-        toast({ title: "Erro ao criar tarefa", description: error.error, variant: "destructive" });
+        toast({ title: "Erro ao criar tarefa", description: error.data?.error, variant: "destructive" });
       }
     }
   });
@@ -136,7 +137,7 @@ export function DetalhesProjetoPage() {
         tarefaForm.reset();
       },
       onError: (error) => {
-        toast({ title: "Erro ao atualizar tarefa", description: error.error, variant: "destructive" });
+        toast({ title: "Erro ao atualizar tarefa", description: error.data?.error, variant: "destructive" });
       }
     }
   });
@@ -173,6 +174,12 @@ export function DetalhesProjetoPage() {
     },
   });
 
+  const toDateStr = (val: Date | string | null | undefined) => {
+    if (!val) return "";
+    const d = val instanceof Date ? val : new Date(val);
+    return dateFnsFormat(d, "yyyy-MM-dd");
+  };
+
   const handleOpenEditTarefa = (tarefa: any) => {
     setEditingTarefa(tarefa.id);
     tarefaForm.reset({
@@ -181,7 +188,7 @@ export function DetalhesProjetoPage() {
       status: tarefa.status,
       prioridade: tarefa.prioridade,
       responsavelId: tarefa.responsavelId || null,
-      dataVencimento: tarefa.dataVencimento || "",
+      dataVencimento: toDateStr(tarefa.dataVencimento),
     });
     setTarefaOpen(true);
   };
@@ -207,15 +214,15 @@ export function DetalhesProjetoPage() {
     };
     
     if (editingTarefa) {
-      updateTarefaMutation.mutate({ params: { projetoId: id, id: editingTarefa }, data });
+      updateTarefaMutation.mutate({ projetoId: id, id: editingTarefa, data });
     } else {
-      createTarefaMutation.mutate({ params: { projetoId: id }, data });
+      createTarefaMutation.mutate({ projetoId: id, data });
     }
   };
 
   const handleAddMember = () => {
     if (memberIdToAdd) {
-      addMemberMutation.mutate({ params: { projetoId: id }, data: { usuarioId: Number(memberIdToAdd) } });
+      addMemberMutation.mutate({ projetoId: id, data: { usuarioId: Number(memberIdToAdd) } });
     }
   };
 
@@ -271,7 +278,9 @@ export function DetalhesProjetoPage() {
   };
 
   const isAtrasado = new Date(projeto.dataPrazo) < new Date() && projeto.status !== "CONCLUIDO" && projeto.status !== "CANCELADO";
-  const progress = projeto.totalTarefas > 0 ? (projeto.tarefasConcluidas / projeto.totalTarefas) * 100 : 0;
+  const totalTarefas = projeto.tarefas.length;
+  const tarefasConcluidas = projeto.tarefas.filter(t => t.status === "CONCLUIDA").length;
+  const progress = totalTarefas > 0 ? (tarefasConcluidas / totalTarefas) * 100 : 0;
   
   const usuariosDisponiveis = usuarios?.filter(u => 
     !projeto.membros.some(m => m.usuarioId === u.id) && u.id !== projeto.gerenteId
@@ -319,7 +328,7 @@ export function DetalhesProjetoPage() {
                   Progresso das Tarefas
                 </span>
                 <span className="text-muted-foreground">
-                  {projeto.tarefasConcluidas} de {projeto.totalTarefas} concluídas ({Math.round(progress)}%)
+                  {tarefasConcluidas} de {totalTarefas} concluídas ({Math.round(progress)}%)
                 </span>
               </div>
               <Progress value={progress} className="h-2" />
@@ -424,7 +433,8 @@ export function DetalhesProjetoPage() {
                         value={tarefa.status} 
                         onValueChange={(val: any) => {
                           updateTarefaStatusMutation.mutate({ 
-                            params: { projetoId: id, id: tarefa.id }, 
+                            projetoId: id, 
+                            id: tarefa.id, 
                             data: { status: val } 
                           });
                         }}
@@ -554,7 +564,7 @@ export function DetalhesProjetoPage() {
                     variant="ghost" 
                     size="icon" 
                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                    onClick={() => removeMemberMutation.mutate({ params: { projetoId: id, usuarioId: membro.usuarioId } })}
+                    onClick={() => removeMemberMutation.mutate({ projetoId: id, usuarioId: membro.usuarioId })}
                     disabled={removeMemberMutation.isPending}
                   >
                     <UserMinus className="h-4 w-4" />
@@ -725,7 +735,7 @@ export function DetalhesProjetoPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => deleteTarefaId && deleteTarefaMutation.mutate({ params: { projetoId: id, id: deleteTarefaId } })}
+              onClick={() => deleteTarefaId && deleteTarefaMutation.mutate({ projetoId: id, id: deleteTarefaId })}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Sim, excluir

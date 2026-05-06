@@ -1,0 +1,156 @@
+2. Criar um novo Repl (projeto)
+Clique em "Create Repl" ou "+ Create"
+
+Escolha a linguagem: "Java (Maven)" (é uma opção pronta)
+
+✅ O Replit já vai criar para você:
+
+Um arquivo pom.xml (Maven)
+
+Uma pasta src/main/java/... com uma Main.java de exemplo
+
+📁 Onde colar os códigos?
+No Replit, você vê do lado esquerdo a árvore de arquivos. Você vai:
+
+a) Substituir o conteúdo do pom.xml
+Clique no arquivo pom.xml
+
+Apague tudo e cole o código abaixo:
+
+xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>br.com.oracle</groupId>
+    <artifactId>gestao-projetos</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>br.com.oracle.gestaoprojetos.Main</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+b) Criar as pastas e arquivos Java
+No lado esquerdo, você vai criar as pastas clicando no ícone de pasta:
+
+Clique com botão direito em src/main/java → New Folder → digite br
+
+Dentro de br → New Folder → com
+
+Dentro de com → oracle
+
+Dentro de oracle → gestaoprojetos
+
+Dentro de gestaoprojetos → crie as subpastas: model e dao
+
+Agora, crie os arquivos dentro das pastas certas:
+
+Arquivo model/Usuario.java
+Na pasta gestaoprojetos/model, crie Usuario.java com o conteúdo já fornecido anteriormente.
+
+Arquivo model/Perfil.java
+(enum) – crie normalmente.
+
+Arquivo dao/ConnectionFactory.java
+java
+package br.com.oracle.gestaoprojetos.dao;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class ConnectionFactory {
+    private static final String URL = "jdbc:h2:~/gestao_projetos_db";
+    private static final String USER = "sa";
+    private static final String PASSWORD = "";
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
+}
+Arquivo dao/UsuarioDAO.java
+(código já fornecido anteriormente, sem alterações)
+
+Arquivo Main.java na pasta gestaoprojetos
+java
+package br.com.oracle.gestaoprojetos;
+
+import br.com.oracle.gestaoprojetos.dao.UsuarioDAO;
+import br.com.oracle.gestaoprojetos.model.Perfil;
+import br.com.oracle.gestaoprojetos.model.Usuario;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Scanner;
+
+public class Main {
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final UsuarioDAO usuarioDAO = new UsuarioDAO();
+
+    public static void main(String[] args) throws SQLException {
+        System.out.println("=== SISTEMA DE GESTÃO DE PROJETOS ===");
+        boolean running = true;
+        while (running) {
+            System.out.println("1 - Cadastrar Usuário");
+            System.out.println("2 - Listar Usuários");
+            System.out.println("0 - Sair");
+            System.out.print("Opção: ");
+            int opcao = Integer.parseInt(scanner.nextLine());
+            switch (opcao) {
+                case 1 -> cadastrarUsuario();
+                case 2 -> listarUsuarios();
+                case 0 -> running = false;
+                default -> System.out.println("Opção inválida.");
+            }
+        }
+        scanner.close();
+    }
+
+    private static void cadastrarUsuario() throws SQLException {
+        System.out.print("Nome: ");
+        String nome = scanner.nextLine();
+        System.out.print("CPF: ");
+        String cpf = scanner.nextLine();
+        System.out.print("Email: ");
+        String email = scanner.nextLine();
+        System.out.print("Cargo: ");
+        String cargo = scanner.nextLine();
+        System.out.print("Login: ");
+        String login = scanner.nextLine();
+        System.out.print("Senha: ");
+        String senha = scanner.nextLine();
+        System.out.print("Perfil (ADMIN, GERENTE, COLABORADOR): ");
+        Perfil perfil = Perfil.valueOf(scanner.nextLine().toUpperCase());
+
+        Usuario usuario = new Usuario(nome, cpf, email, cargo, login, senha, perfil);
+        usuarioDAO.salvar(usuario);
+        System.out.println("Usuário salvo com ID: " + usuario.getId());
+    }
+
+    private static void listarUsuarios() throws SQLException {
+        List<Usuario> usuarios = usuarioDAO.listarTodos();
+        System.out.println("\n--- USUÁRIOS ---");
+        for (Usuario u : usuarios) {
+            System.out.println(u.getId() + " - " + u.getNome() + " (" + u.getPerfil() + ")");
+        }
+    }
+}

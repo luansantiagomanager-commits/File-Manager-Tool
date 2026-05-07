@@ -50,7 +50,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import { format as dateFnsFormat } from "date-fns";
-import { ArrowLeft, Edit, CalendarDays, Users, CheckSquare, Plus, Trash2, Loader2, MoreHorizontal, UserMinus } from "lucide-react";
+import { ArrowLeft, Edit, CalendarDays, Users, CheckSquare, Plus, Trash2, Loader2, MoreHorizontal, UserMinus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -78,6 +78,8 @@ export function DetalhesProjetoPage() {
   const [editingTarefa, setEditingTarefa] = useState<number | null>(null);
   
   const [deleteTarefaId, setDeleteTarefaId] = useState<number | null>(null);
+  const [tarefaPage, setTarefaPage] = useState(1);
+  const [tarefaFiltroStatus, setTarefaFiltroStatus] = useState<string>("TODOS");
 
   const { data: projeto, isLoading: loadingProjeto } = useGetProjeto(id, { 
     query: { enabled: !!id, queryKey: getGetProjetoQueryKey(id) } 
@@ -286,6 +288,17 @@ export function DetalhesProjetoPage() {
     !projeto.membros.some(m => m.usuarioId === u.id) && u.id !== projeto.gerenteId
   );
 
+  const TAREFAS_PER_PAGE = 10;
+  const tarefasFiltradas = tarefaFiltroStatus === "TODOS"
+    ? projeto.tarefas
+    : projeto.tarefas.filter(t => t.status === tarefaFiltroStatus);
+  const totalTarefaPages = Math.max(1, Math.ceil(tarefasFiltradas.length / TAREFAS_PER_PAGE));
+  const safeTarefaPage = Math.min(tarefaPage, totalTarefaPages);
+  const tarefasPaginadas = tarefasFiltradas.slice(
+    (safeTarefaPage - 1) * TAREFAS_PER_PAGE,
+    safeTarefaPage * TAREFAS_PER_PAGE
+  );
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -385,102 +398,158 @@ export function DetalhesProjetoPage() {
         </TabsList>
         
         <TabsContent value="tarefas" className="pt-6">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
             <h2 className="text-xl font-semibold">Lista de Tarefas</h2>
-            <Button onClick={handleOpenCreateTarefa} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" /> Nova Tarefa
-            </Button>
+            <div className="flex items-center gap-2">
+              <Select value={tarefaFiltroStatus} onValueChange={(v) => { setTarefaFiltroStatus(v); setTarefaPage(1); }}>
+                <SelectTrigger className="w-[150px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODOS">Todos os status</SelectItem>
+                  <SelectItem value="PENDENTE">Pendente</SelectItem>
+                  <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
+                  <SelectItem value="CONCLUIDA">Concluída</SelectItem>
+                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={handleOpenCreateTarefa} size="sm" className="gap-2">
+                <Plus className="h-4 w-4" /> Nova Tarefa
+              </Button>
+            </div>
           </div>
 
-          {projeto.tarefas.length > 0 ? (
-            <div className="space-y-3">
-              {projeto.tarefas.map(tarefa => (
-                <Card key={tarefa.id} className={`overflow-hidden ${tarefa.status === 'CONCLUIDA' ? 'bg-muted/30 opacity-70' : ''}`}>
-                  <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className={`font-semibold ${tarefa.status === 'CONCLUIDA' ? 'line-through text-muted-foreground' : ''}`}>
-                          {tarefa.titulo}
-                        </h4>
-                        {getPrioridadeBadge(tarefa.prioridade)}
+          {tarefasFiltradas.length > 0 ? (
+            <>
+              <div className="space-y-3">
+                {tarefasPaginadas.map(tarefa => (
+                  <Card key={tarefa.id} className={`overflow-hidden ${tarefa.status === 'CONCLUIDA' ? 'bg-muted/30 opacity-70' : ''}`}>
+                    <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className={`font-semibold ${tarefa.status === 'CONCLUIDA' ? 'line-through text-muted-foreground' : ''}`}>
+                            {tarefa.titulo}
+                          </h4>
+                          {getPrioridadeBadge(tarefa.prioridade)}
+                        </div>
+                        {tarefa.descricao && (
+                          <p className="text-sm text-muted-foreground line-clamp-1">{tarefa.descricao}</p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 pt-2 text-xs text-muted-foreground">
+                          {tarefa.responsavelNome ? (
+                            <span className="flex items-center gap-1.5 font-medium text-foreground">
+                              <Avatar className="h-4 w-4">
+                                <AvatarFallback className="text-[8px]">{tarefa.responsavelNome.substring(0, 2).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              {tarefa.responsavelNome}
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 italic">Sem responsável</span>
+                          )}
+                          {tarefa.dataVencimento && (
+                            <span className="flex items-center gap-1.5">
+                              <CalendarDays className="h-3 w-3" />
+                              Vence em: {format(new Date(tarefa.dataVencimento), "dd/MM/yyyy")}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {tarefa.descricao && (
-                        <p className="text-sm text-muted-foreground line-clamp-1">{tarefa.descricao}</p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 pt-2 text-xs text-muted-foreground">
-                        {tarefa.responsavelNome ? (
-                          <span className="flex items-center gap-1.5 font-medium text-foreground">
-                            <Avatar className="h-4 w-4">
-                              <AvatarFallback className="text-[8px]">{tarefa.responsavelNome.substring(0, 2).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            {tarefa.responsavelNome}
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5 italic">Sem responsável</span>
-                        )}
-                        
-                        {tarefa.dataVencimento && (
-                          <span className="flex items-center gap-1.5">
-                            <CalendarDays className="h-3 w-3" />
-                            Vence em: {format(new Date(tarefa.dataVencimento), "dd/MM/yyyy")}
-                          </span>
-                        )}
+
+                      <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <Select
+                          value={tarefa.status}
+                          onValueChange={(val: any) => {
+                            updateTarefaStatusMutation.mutate({
+                              projetoId: id,
+                              id: tarefa.id,
+                              data: { status: val },
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="w-[140px] h-8 text-xs bg-transparent border-dashed">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="PENDENTE">Pendente</SelectItem>
+                            <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
+                            <SelectItem value="CONCLUIDA">Concluída</SelectItem>
+                            <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleOpenEditTarefa(tarefa)}>
+                              <Edit className="mr-2 h-4 w-4" /> Editar Tarefa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                              onClick={() => setDeleteTarefaId(tarefa.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Excluir Tarefa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-3 self-end sm:self-auto">
-                      <Select 
-                        value={tarefa.status} 
-                        onValueChange={(val: any) => {
-                          updateTarefaStatusMutation.mutate({ 
-                            projetoId: id, 
-                            id: tarefa.id, 
-                            data: { status: val } 
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="w-[140px] h-8 text-xs bg-transparent border-dashed">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PENDENTE">Pendente</SelectItem>
-                          <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
-                          <SelectItem value="CONCLUIDA">Concluída</SelectItem>
-                          <SelectItem value="CANCELADA">Cancelada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenEditTarefa(tarefa)}>
-                            <Edit className="mr-2 h-4 w-4" /> Editar Tarefa
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                            onClick={() => setDeleteTarefaId(tarefa.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Excluir Tarefa
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              {totalTarefaPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {Math.min((safeTarefaPage - 1) * TAREFAS_PER_PAGE + 1, tarefasFiltradas.length)}–{Math.min(safeTarefaPage * TAREFAS_PER_PAGE, tarefasFiltradas.length)} de {tarefasFiltradas.length} tarefas
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      disabled={safeTarefaPage <= 1}
+                      onClick={() => setTarefaPage(p => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      {safeTarefaPage} / {totalTarefaPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      disabled={safeTarefaPage >= totalTarefaPages}
+                      onClick={() => setTarefaPage(p => Math.min(totalTarefaPages, p + 1))}
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                </Card>
-              ))}
-            </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-12 border rounded-lg bg-muted/20">
               <CheckSquare className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-              <h3 className="text-lg font-medium">Nenhuma tarefa</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">Adicione tarefas para acompanhar o progresso deste projeto.</p>
-              <Button onClick={handleOpenCreateTarefa} variant="outline" size="sm">
-                Criar Primeira Tarefa
-              </Button>
+              <h3 className="text-lg font-medium">
+                {tarefaFiltroStatus === "TODOS" ? "Nenhuma tarefa" : "Nenhuma tarefa com este status"}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1 mb-4">
+                {tarefaFiltroStatus === "TODOS"
+                  ? "Adicione tarefas para acompanhar o progresso deste projeto."
+                  : "Tente selecionar outro filtro de status."}
+              </p>
+              {tarefaFiltroStatus === "TODOS" && (
+                <Button onClick={handleOpenCreateTarefa} variant="outline" size="sm">
+                  Criar Primeira Tarefa
+                </Button>
+              )}
             </div>
           )}
         </TabsContent>

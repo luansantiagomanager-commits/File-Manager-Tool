@@ -28,13 +28,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, CalendarDays, Users, CheckSquare, FolderKanban } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, CalendarDays, Users, CheckSquare, FolderKanban, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const PROJETOS_PER_PAGE = 9;
 
 export function ProjetosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+
   const { data: projetos, isLoading } = useListProjetos();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -56,6 +59,13 @@ export function ProjetosPage() {
   const filteredProjetos = projetos?.filter(p => 
     p.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.gerenteNome.toLowerCase().includes(searchTerm.toLowerCase())
+  ) ?? [];
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjetos.length / PROJETOS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedProjetos = filteredProjetos.slice(
+    (safePage - 1) * PROJETOS_PER_PAGE,
+    safePage * PROJETOS_PER_PAGE
   );
 
   const getStatusBadge = (status: string) => {
@@ -93,7 +103,7 @@ export function ProjetosPage() {
                 placeholder="Buscar projetos..."
                 className="pl-8"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               />
             </div>
           </div>
@@ -103,9 +113,9 @@ export function ProjetosPage() {
             <div className="space-y-4">
               {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full" />)}
             </div>
-          ) : filteredProjetos && filteredProjetos.length > 0 ? (
+          ) : filteredProjetos.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredProjetos.map((projeto) => {
+              {paginatedProjetos.map((projeto) => {
                 const isAtrasado = new Date(projeto.dataPrazo) < new Date() && projeto.status !== "CONCLUIDO" && projeto.status !== "CANCELADO";
                 const progress = projeto.totalTarefas > 0 ? (projeto.tarefasConcluidas / projeto.totalTarefas) * 100 : 0;
                 
@@ -184,7 +194,52 @@ export function ProjetosPage() {
                 );
               })}
             </div>
-          ) : (
+          ) : null}
+
+          {!isLoading && filteredProjetos.length > 0 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Mostrando {Math.min((safePage - 1) * PROJETOS_PER_PAGE + 1, filteredProjetos.length)}–{Math.min(safePage * PROJETOS_PER_PAGE, filteredProjetos.length)} de {filteredProjetos.length} projetos
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  disabled={safePage <= 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <Button
+                      key={page}
+                      variant={safePage === page ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  disabled={safePage >= totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && filteredProjetos.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               <FolderKanban className="h-12 w-12 mx-auto text-muted mb-4" />
               <p className="text-lg font-medium">Nenhum projeto encontrado</p>

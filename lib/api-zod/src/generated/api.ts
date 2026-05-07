@@ -15,6 +15,35 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Login with credentials
+ */
+export const LoginBody = zod.object({
+  login: zod.string(),
+  senha: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  login: zod.string(),
+  email: zod.string(),
+  cargo: zod.string(),
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+});
+
+/**
+ * @summary Get current authenticated user
+ */
+export const GetMeResponse = zod.object({
+  id: zod.number(),
+  nome: zod.string(),
+  login: zod.string(),
+  email: zod.string(),
+  cargo: zod.string(),
+  perfil: zod.enum(["ADMIN", "GERENTE", "COLABORADOR"]),
+});
+
+/**
  * @summary List all users
  */
 export const ListUsuariosResponseItem = zod.object({

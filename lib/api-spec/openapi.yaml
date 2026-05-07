@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
   - name: usuarios
     description: User management operations
   - name: projetos
@@ -33,6 +35,66 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Auth ──────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "204":
+          description: Logout successful
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   # ── Usuarios ──────────────────────────────────────────────────
   /usuarios:
@@ -573,6 +635,32 @@ components:
           type: string
       required:
         - error
+
+    LoginBody:
+      type: object
+      properties:
+        login:
+          type: string
+        senha:
+          type: string
+      required: [login, senha]
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        login:
+          type: string
+        email:
+          type: string
+        cargo:
+          type: string
+        perfil:
+          $ref: "#/components/schemas/Perfil"
+      required: [id, nome, login, email, cargo, perfil]
 
     # ── Enums ──────────────────────────────────────────────────
     Perfil:

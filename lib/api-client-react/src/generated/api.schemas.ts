@@ -13,6 +13,11 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface LoginBody {
+  login: string;
+  senha: string;
+}
+
 export type Perfil = (typeof Perfil)[keyof typeof Perfil];
 
 export const Perfil = {
@@ -20,6 +25,15 @@ export const Perfil = {
   GERENTE: "GERENTE",
   COLABORADOR: "COLABORADOR",
 } as const;
+
+export interface AuthUser {
+  id: number;
+  nome: string;
+  login: string;
+  email: string;
+  cargo: string;
+  perfil: Perfil;
+}
 
 export type StatusProjeto = (typeof StatusProjeto)[keyof typeof StatusProjeto];
 
